@@ -163,7 +163,7 @@ def search(handle, url):
             urllib.urlencode({ 's': searchString, 'op.x': 0, 'op.y': 0 })
     parse(handle, url, MODE_SEARCH, MODE_VIDEO,
           partP='<div class="entry">(.+?)</div>',
-          nameP='<li><a .+?">(.+?)</a></li>',
+          nameP='<li><a .+?">(.+?)</a>',
           urlP='<li><a href="(.+?)"',
           imgP = None)
 
