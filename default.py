@@ -188,7 +188,7 @@ cookieprocessor = urllib2.HTTPCookieProcessor(cookiejar)
 opener = urllib2.build_opener(MyHTTPRedirectHandler, cookieprocessor)
 urllib2.install_opener(opener)
 
-params = parameters_string_to_dict(sys.argv[2])
+params = parameters_string_to_dict(sys.argv[2]) if len(sys.argv) > 2 else {}
 mode = params.get('mode', None)
 url = params.get("url",  None)
 if url: url = urllib.unquote_plus(url)
