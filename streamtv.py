@@ -33,7 +33,7 @@ def parse(html, part_pattern, name_pattern, url_pattern, img_pattern,
     # TODO plot
     html = re.findall(part_pattern, html, re.DOTALL)
     if not html:
-        return
+        return []
     html = html[0].replace('</tr><tr>', '</tr>\n<tr>')
     name = re.findall(name_pattern, html, nameFlag)
     url = re.findall(url_pattern, html, urlFlag)
