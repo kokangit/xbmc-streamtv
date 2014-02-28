@@ -72,7 +72,7 @@ def get_url(url, filename=None, referer=None, data=None):
         file.close()
     return (url, html)
 
-def addItems(name, image, plot, url, mode, isFolder, handle, totalItems):
+def addItems(name, image, plot, url, mode, handle, totalItems):
     for i in range(len(name)):
         li = xbmcgui.ListItem(name[i])
         if image:
@@ -81,8 +81,10 @@ def addItems(name, image, plot, url, mode, isFolder, handle, totalItems):
         if plot:
             infoLabels['Plot'] = plot[i]
         li.setInfo(type='Video', infoLabels=infoLabels)
+        isFolder = True
         if mode == MODE_PLAY:
             li.setProperty('IsPlayable', 'true')
+            isFolder = False
         params = { 'mode': mode }
         if url:
             params['url'] = url[i]
@@ -125,23 +127,23 @@ def parse(handle, url, fromMode, toMode, partP, nameP, urlP, imgP, nameFlag=0,
             raise Exception('found ' + str(len(img)) +
                             ' images but ' + str(len(name)) + ' names!')
     # TODO plot
-    addItems(name, img, None, url, toMode, True, handle, len(name))
+    addItems(name, img, None, url, toMode, handle, len(name))
     if pagination and not 'disabled' in pagination[0]:
         url = BASE_URL + '/' + pagination[0]
-        addItems(['Nästa...'], None, None, [url], fromMode, True, handle, 1)
+        addItems(['Nästa...'], None, None, [url], fromMode, handle, 1)
 
 def start(handle):
     totalItems = 2
     # TODO strings from resources
-    addItems(['A-Ö'], None, None, None, MODE_ALPHABETIC, True, handle, totalItems)
-    addItems(['Sök'], None, None, None, MODE_SEARCH, True, handle, totalItems)
+    addItems(['A-Ö'], None, None, None, MODE_ALPHABETIC, handle, totalItems)
+    addItems(['Sök'], None, None, None, MODE_SEARCH, handle, totalItems)
 
 def alpha(handle, selected):
     selections = ['0-9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K',
                   'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
                   'X', 'Y', 'Z', 'Å', 'Ä', 'Ö']
     if not selected:
-        addItems(selections, None, None, selections, MODE_ALPHABETIC, True,
+        addItems(selections, None, None, selections, MODE_ALPHABETIC,
                  handle, len(selections))
     else:
         parse(handle, BASE_URL, MODE_ALPHABETIC, MODE_SEARCH,
