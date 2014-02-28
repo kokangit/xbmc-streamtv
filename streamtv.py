@@ -50,16 +50,26 @@ def parse(html, part_pattern, name_pattern, url_pattern, img_pattern,
     return zip(name, url, img)
 
 def scrap_alpha(html, selected):
-    part_pattern = '<p><a name="' + selected + '"></a></p>(.+?)</ul>'
-    name_pattern = '<li><strong><a href=".+?">(.+?)</a>'
-    url_pattern = '<li><strong><a href="(.+?)"'
-    return parse(html, part_pattern, name_pattern, url_pattern, None)
+    return parse(html,
+                 part_pattern='<p><a name="%s"></a></p>(.+?)</ul>' % selected,
+                 name_pattern='<li><strong><a href=".+?">(.+?)</a>',
+                 url_pattern='<li><strong><a href="(.+?)"',
+                 img_pattern=None)
 
-def scrap_movie(html):
+def scrap_search(html):
     return parse(html,
                  part_pattern='<div class="entry">(.+?)</div>',
                  name_pattern='<li><a .+?">(.+?)</a>',
                  url_pattern='<li><a href="(.+?)"',
+                 img_pattern=None)
+
+def scrap_video(html):
+    url = re.findall('<IFRAME SRC="(.+?)"', html)[0]
+    html = get_url(url)
+    return parse(html,
+                 part_pattern='<script type=\'text/javascript\'>.+?"playlist"(.+?)</script>',
+                 name_pattern='"label".+?:.+?"(.+?)"',
+                 url_pattern='"file".+?:.+?"(.+?)"',
                  img_pattern=None)
 
 def alpha_html():

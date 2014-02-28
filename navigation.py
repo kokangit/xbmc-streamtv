@@ -24,6 +24,16 @@ class Navigation(object):
                                                 listitem=list_item,
                                                 isFolder=True)
 
+    def add_video_item(self, caption, url, thumb_url=None):
+        list_item = self.xbmcgui.ListItem(caption)
+        list_item.setProperty('IsPlayable', 'true')
+        if thumb_url:
+            list_item.setThumbnailImage(thumb_url)
+        list_item.setInfo(type="Video", infoLabels={"Title": caption})
+        return self.xbmcplugin.addDirectoryItem(handle=self.handle, url=url,
+                                                listitem=list_item,
+                                                isFolder=False)
+
     def build_main_menu(self):
         self.add_menu_item('A-Ö', {'action': 'alpha'})
         self.add_menu_item('Sök', {'action': 'search'})
@@ -43,7 +53,7 @@ class Navigation(object):
         for name, url, thumb_url in \
                 streamtv.scrap_alpha(html, self.params['selected']):
             params = {
-                'action': 'play_movie',
+                'action': 'search_result',
                 'title': name,
                 'movie_url': url
                 }
@@ -51,16 +61,24 @@ class Navigation(object):
         return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
                                               cacheToDisc=True)
 
-    def play_movie(self, title, movie_url):
-        player_urls = streamtv.scrap_movie(streamtv.get_url(movie_url))
-        if len(player_urls) > 1:
-            return self.list_movie_parts(title, player_urls)
+    def search_result(self, title, movie_url):
+        for name, url, thumb_url in \
+                streamtv.scrap_search(streamtv.get_url(movie_url)):
+            params = {
+                'action': 'play_video',
+                'title': name,
+                'movie_url': url
+                }
+            self.add_menu_item(name, params, thumb_url)
+        return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
+                                              cacheToDisc=True)
 
-        if len(player_urls) == 0:
-            dialog = self.xbmcgui.Dialog()
-            return dialog.ok("Error", "No stream found")
-
-        return self.play_stream(title, player_urls[0])
+    def play_video(self, title, movie_url):
+        for name, url, thumb_url in \
+                streamtv.scrap_video(streamtv.get_url(movie_url)):
+            self.add_video_item(name, url, thumb_url)
+        return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
+                                              cacheToDisc=True)
 
     def search(self):
         kb = self.xbmc.Keyboard('', 'Search', False)
@@ -80,8 +98,11 @@ class Navigation(object):
             return self.alpha()
         elif action == 'alphaselected':
             return self.alphaselected()
-        elif action == 'play_movie':
-            return self.play_movie(self.params['title'],
+        elif action == 'search_result':
+            return self.search_result(self.params['title'],
+                                      self.params['movie_url'])
+        elif action == 'play_video':
+            return self.play_video(self.params['title'],
                                    self.params['movie_url'])
         elif action == 'search':
             return self.search()
