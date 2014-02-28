@@ -1,18 +1,27 @@
 # -*- coding: utf-8 -*-
-from mocks import Xbmc, Xbmcplugin, Xbmcgui
+from mocks import Xbmc, Xbmcplugin, Xbmcgui, Xbmcaddon
 import streamtv
 import sys
 import urllib
 
 class Navigation(object):
 
-    def __init__(self, xbmc, xbmcplugin, xbmcgui, argv):
+    def __init__(self, xbmc, xbmcplugin, xbmcgui, xbmcaddon, argv):
         self.xbmc = xbmc
         self.xbmcplugin = xbmcplugin
         self.xbmcgui = xbmcgui
         self.plugin_url = argv[0]
         self.handle = int(argv[1])
         self.params = streamtv.parameters_string_to_dict(argv[2])
+        self.settings = xbmcaddon.Addon(id='plugin.video.streamtv')
+
+    def unikeyboard(self, default, message):
+        keyboard = self.xbmc.Keyboard(default, message)
+        keyboard.doModal()
+        if (keyboard.isConfirmed()):
+            return keyboard.getText()
+        else:
+            return None
 
     def add_menu_item(self, caption, params, thumb_url=None):
         url = self.plugin_url + '?' + urllib.urlencode(params)
@@ -81,14 +90,23 @@ class Navigation(object):
                                               cacheToDisc=True)
 
     def search(self):
-        kb = self.xbmc.Keyboard('', 'Search', False)
-        kb.doModal()
-        if kb.isConfirmed():
-            text = kb.getText()
-            matches = dreamfilm.scrap_search(dreamfilm.search(text))
-            for m in matches:
-                self.add_movie_list_item(m[0], m[1])
-            return self.xbmcplugin.endOfDirectory(self.handle)
+        try:
+            latestSearch = self.settings.getSetting("latestSearch")
+        except KeyError:
+            latestSearch = ""
+        text = self.unikeyboard(latestSearch, "")
+        if text == "": return
+        self.settings.setSetting("latestSearch", text)
+        for name, url, thumb_url in \
+                streamtv.scrap_search(streamtv.search_html(text)):
+            params = {
+                'action': 'play_video',
+                'title': name,
+                'movie_url': url
+                }
+            self.add_menu_item(name, params, thumb_url)
+        return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
+                                              cacheToDisc=True)
 
     def dispatch(self):
         if not 'action' in self.params:
@@ -113,6 +131,7 @@ if __name__ == '__main__':
     xbmc = Xbmc(level=Xbmc.LOGNOTICE)
     xbmcplugin = Xbmcplugin(xbmc)
     xbmcgui = Xbmcgui()
+    xbmcaddon = Xbmcaddon()
     sys.argv = ['plugin', '10', '?' + sys.argv[1]]
-    navigation = Navigation(xbmc, xbmcplugin, xbmcgui, sys.argv)
+    navigation = Navigation(xbmc, xbmcplugin, xbmcgui, xbmcaddon, sys.argv)
     navigation.dispatch()

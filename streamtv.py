@@ -74,3 +74,7 @@ def scrap_video(html):
 
 def alpha_html():
     return get_url(BASE_URL)
+
+def search_html(text):
+    url = BASE_URL + '/?' + urllib.urlencode({'s': text, 'op.x': 0, 'op.y': 0})
+    return get_url(url)
