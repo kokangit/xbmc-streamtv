@@ -42,9 +42,9 @@ def parse(html, part_pattern, name_pattern, url_pattern, img_pattern,
                         ' urls but ' + str(len(name)) + ' names!')
     if img_pattern:
         img = re.findall(img_pattern, html, imgFlag)
-        if len(img) != len(name):
-            raise Exception('found ' + str(len(img)) +
-                            ' images but ' + str(len(name)) + ' names!')
+        if len(img) != len(name) and len(img) == 1:
+            # pick first image for all
+            img = [img[0]]*len(name)
     else:
         img = [None]*len(name)
     return zip(name, url, img)
@@ -61,7 +61,7 @@ def scrap_search(html):
                  part_pattern='<div class="entry">(.+?)</div>',
                  name_pattern='<li><a .+?">(.+?)</a>',
                  url_pattern='<li><a href="(.+?)"',
-                 img_pattern=None)
+                 img_pattern='<img class=.+?src="(.+?)"')
 
 def scrap_video(html):
     url = re.findall('<IFRAME SRC="(.+?)"', html)[0]

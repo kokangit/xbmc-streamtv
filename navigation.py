@@ -33,12 +33,12 @@ class Navigation(object):
                                                 listitem=list_item,
                                                 isFolder=True)
 
-    def add_video_item(self, caption, url, thumb_url=None):
+    def add_video_item(self, name, caption, url, thumb_url=None):
         list_item = self.xbmcgui.ListItem(caption)
         list_item.setProperty('IsPlayable', 'true')
         if thumb_url:
             list_item.setThumbnailImage(thumb_url)
-        list_item.setInfo(type="Video", infoLabels={"Title": caption})
+        list_item.setInfo(type="Video", infoLabels={"Title": name})
         return self.xbmcplugin.addDirectoryItem(handle=self.handle, url=url,
                                                 listitem=list_item,
                                                 isFolder=False)
@@ -56,6 +56,8 @@ class Navigation(object):
         for sel in selections:
             self.add_menu_item(sel, {'action': 'alphaselected',
                                      'selected': sel})
+        return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
+                                              cacheToDisc=True)
 
     def alphaselected(self):
         html = streamtv.alpha_html()
@@ -83,9 +85,9 @@ class Navigation(object):
                                               cacheToDisc=True)
 
     def play_video(self, title, movie_url):
-        for name, url, thumb_url in \
+        for caption, url, thumb_url in \
                 streamtv.scrap_video(streamtv.get_url(movie_url)):
-            self.add_video_item(name, url, thumb_url)
+            self.add_video_item(title, caption, url, thumb_url)
         return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
                                               cacheToDisc=True)
 
@@ -95,7 +97,7 @@ class Navigation(object):
         except KeyError:
             latestSearch = ""
         text = self.unikeyboard(latestSearch, "")
-        if text == "": return
+        if not text or text == "": return
         self.settings.setSetting("latestSearch", text)
         for name, url, thumb_url in \
                 streamtv.scrap_search(streamtv.search_html(text)):
