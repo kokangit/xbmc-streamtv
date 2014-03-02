@@ -59,26 +59,69 @@ class Navigation(object):
         return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
                                               cacheToDisc=True)
 
-    def alphaselected(self):
-        html = streamtv.alpha_html()
-        for name, url, thumb_url in \
-                streamtv.scrap_alpha(html, self.params['selected']):
+    def alpha_selected(self):
+        html = streamtv.alpha_selected_html()
+        for name, url in \
+                streamtv.scrape_shows(html, self.params['selected']):
             params = {
-                'action': 'search_result',
-                'title': name,
-                'movie_url': url
+                'action': 'showselected',
+                'show': name,
+                'url': url
                 }
-            self.add_menu_item(name, params, thumb_url)
+            self.add_menu_item(name, params, None)
+        return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
+                                              cacheToDisc=True)
+
+    def show_selected(self):
+        show_url = self.params['url']
+        html = streamtv.show_selected_html(show_url)
+        for season, thumb_url in \
+                streamtv.scrape_seasons(html):
+            params = {
+                'action': 'seasonselected',
+                'url': show_url,
+                'season': season,
+                'thumb_url': thumb_url
+                }
+            self.add_menu_item(season, params, thumb_url)
+        return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
+                                              cacheToDisc=True)
+
+    def season_selected(self):
+        url = self.params['url']
+        season = self.params['season']
+        thumb_url = self.params['thumb_url']
+        html = streamtv.season_selected_html(url)
+        for episode, url in \
+                streamtv.scrape_episodes(html, season):
+            params = {
+                'action': 'episodeselected',
+                'url': url,
+                'thumb_url': thumb_url,
+                'title': episode
+                }
+            self.add_menu_item(episode, params, thumb_url)
+        return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
+                                              cacheToDisc=True)
+
+    def episode_selected(self):
+        url = self.params['url']
+        title = self.params['title']
+        thumb_url = self.params['thumb_url']
+        html = streamtv.episode_selected_html(url)
+        for caption, url in \
+                streamtv.scrape_episode(html):
+            self.add_video_item(title, caption, url, thumb_url)
         return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
                                               cacheToDisc=True)
 
     def search_result(self, title, movie_url):
         for name, url, thumb_url in \
-                streamtv.scrap_search(streamtv.get_url(movie_url)):
+                streamtv.scrape_search(streamtv.get_url(movie_url)):
             params = {
                 'action': 'play_video',
                 'title': name,
-                'movie_url': url
+                'movie_url': url if url else movie_url
                 }
             self.add_menu_item(name, params, thumb_url)
         return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
@@ -86,7 +129,7 @@ class Navigation(object):
 
     def play_video(self, title, movie_url):
         for caption, url, thumb_url in \
-                streamtv.scrap_video(streamtv.get_url(movie_url)):
+                streamtv.scrape_video(streamtv.get_url(movie_url)):
             self.add_video_item(title, caption, url, thumb_url)
         return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
                                               cacheToDisc=True)
@@ -100,7 +143,7 @@ class Navigation(object):
         if not text or text == "": return
         self.settings.setSetting("latestSearch", text)
         for name, url, thumb_url in \
-                streamtv.scrap_search(streamtv.search_html(text)):
+                streamtv.scrape_search(streamtv.search_html(text)):
             params = {
                 'action': 'play_video',
                 'title': name,
@@ -117,13 +160,19 @@ class Navigation(object):
         if action == 'alpha':
             return self.alpha()
         elif action == 'alphaselected':
-            return self.alphaselected()
-        elif action == 'search_result':
-            return self.search_result(self.params['title'],
-                                      self.params['movie_url'])
+            return self.alpha_selected()
+        elif action == 'showselected':
+            return self.show_selected()
+        elif action == 'seasonselected':
+            return self.season_selected()
+        elif action == 'episodeselected':
+            return self.episode_selected()
         elif action == 'play_video':
             return self.play_video(self.params['title'],
                                    self.params['movie_url'])
+        elif action == 'search_result':
+            return self.search_result(self.params['title'],
+                                      self.params['movie_url'])
         elif action == 'search':
             return self.search()
 

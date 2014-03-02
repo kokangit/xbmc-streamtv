@@ -36,34 +36,51 @@ def parse(html, part_pattern, name_pattern, url_pattern, img_pattern,
         return []
     html = html[0].replace('</tr><tr>', '</tr>\n<tr>')
     name = re.findall(name_pattern, html, nameFlag)
-    url = re.findall(url_pattern, html, urlFlag)
-    if len(url) != len(name):
-        raise Exception('found ' + str(len(url)) +
-                        ' urls but ' + str(len(name)) + ' names!')
+    if url_pattern:
+        url = re.findall(url_pattern, html, urlFlag)
+        if len(url) != len(name):
+            raise Exception('found ' + str(len(url)) +
+                            ' urls but ' + str(len(name)) + ' names!')
+    else:
+        url = None
     if img_pattern:
         img = re.findall(img_pattern, html, imgFlag)
         if len(img) != len(name) and len(img) == 1:
             # pick first image for all
             img = [img[0]]*len(name)
     else:
-        img = [None]*len(name)
-    return zip(name, url, img)
+        img = None
+    if url and img:
+        ret = zip(name, url, img)
+    elif url:
+        ret = zip(name, url)
+    elif img:
+        ret = zip(name, img)
+    return ret
 
-def scrap_alpha(html, selected):
+def scrape_shows(html, selected):
     return parse(html,
                  part_pattern='<p><a name="%s"></a></p>(.+?)</ul>' % selected,
                  name_pattern='<li><strong><a href=".+?">(.+?)</a>',
                  url_pattern='<li><strong><a href="(.+?)"',
                  img_pattern=None)
 
-def scrap_search(html):
+def scrape_seasons(html):
     return parse(html,
                  part_pattern='<div class="entry">(.+?)</div>',
-                 name_pattern='<li><a .+?">(.+?)</a>',
-                 url_pattern='<li><a href="(.+?)"',
+                 name_pattern='<strong>(Season .+?)</strong>',
+                 url_pattern=None,
                  img_pattern='<img class=.+?src="(.+?)"')
 
-def scrap_video(html):
+def scrape_episodes(html, season):
+    season = urllib.unquote_plus(season)
+    return parse(html,
+                 part_pattern='<strong>%s</strong>(.+?)</ul>' % season,
+                 name_pattern='<li><a .+?">(.+?)</a>',
+                 url_pattern='<a href="(.+?)"',
+                 img_pattern=None)
+
+def scrape_episode(html):
     url = re.findall('<IFRAME SRC="(.+?)"', html)[0]
     html = get_url(url)
     return parse(html,
@@ -72,8 +89,33 @@ def scrap_video(html):
                  url_pattern='"file".+?:.+?"(.+?)"',
                  img_pattern=None)
 
-def alpha_html():
+def scrape_search(html):
+    return parse(html,
+                 part_pattern='<div class="entry">(.+?)</div>',
+                 name_pattern='<li><a .+?">(.+?)</a>',
+                 url_pattern=None,
+                 img_pattern='<img class=.+?src="(.+?)"')
+
+def scrape_video(html):
+    url = re.findall('<IFRAME SRC="(.+?)"', html)[0]
+    html = get_url(url)
+    return parse(html,
+                 part_pattern='<script type=\'text/javascript\'>.+?"playlist"(.+?)</script>',
+                 name_pattern='"label".+?:.+?"(.+?)"',
+                 url_pattern='"file".+?:.+?"(.+?)"',
+                 img_pattern=None)
+
+def alpha_selected_html():
     return get_url(BASE_URL)
+
+def show_selected_html(url):
+    return get_url(url)
+
+def season_selected_html(url):
+    return get_url(url)
+
+def episode_selected_html(url):
+    return get_url(url)
 
 def search_html(text):
     url = BASE_URL + '/?' + urllib.urlencode({'s': text, 'op.x': 0, 'op.y': 0})
