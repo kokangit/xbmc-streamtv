@@ -123,25 +123,6 @@ class Navigation(object):
         return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
                                               cacheToDisc=True)
 
-    def search_result(self, title, movie_url):
-        for name, url, thumb_url in \
-                streamtv.scrape_search(streamtv.get_url(movie_url)):
-            params = {
-                'action': 'play_video',
-                'title': name,
-                'movie_url': url if url else movie_url
-                }
-            self.add_menu_item(name, params, thumb_url=thumb_url)
-        return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
-                                              cacheToDisc=True)
-
-    def play_video(self, title, movie_url):
-        for caption, url, thumb_url in \
-                streamtv.scrape_video(streamtv.get_url(movie_url)):
-            self.add_video_item(title, caption, url, thumb_url)
-        return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
-                                              cacheToDisc=True)
-
     def search(self):
         try:
             latestSearch = self.settings.getSetting("latestSearch")
@@ -150,20 +131,22 @@ class Navigation(object):
         text = self.unikeyboard(latestSearch, "")
         if not text or text == "": return
         self.settings.setSetting("latestSearch", text)
-        for name, url, thumb_url in \
-                streamtv.scrape_search(streamtv.search_html(text)):
+        html = streamtv.search_html(text)
+        for name, url in \
+                streamtv.scrape_search(html):
             params = {
-                'action': 'play_video',
-                'title': name,
-                'movie_url': url
+                'action': 'showselected',
+                'show': name,
+                'url': url
                 }
-            self.add_menu_item(name, params, thumb_url=thumb_url)
+            self.add_menu_item(name, params)
         return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
                                               cacheToDisc=True)
 
     def dispatch(self):
         if not 'action' in self.params:
-            return self.build_main_menu()
+            return self.alpha()
+            #return self.build_main_menu()
         action = self.params['action']
         if action == 'alpha':
             return self.alpha()
@@ -178,11 +161,11 @@ class Navigation(object):
         elif action == 'play_video':
             return self.play_video(self.params['title'],
                                    self.params['movie_url'])
+        elif action == 'search':
+            return self.search()
         elif action == 'search_result':
             return self.search_result(self.params['title'],
                                       self.params['movie_url'])
-        elif action == 'search':
-            return self.search()
 
 # Use of standalone Navigation for testing:
 # python navigation.py <params>

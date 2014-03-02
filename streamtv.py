@@ -94,15 +94,6 @@ def scrape_search(html):
                  url_pattern=None,
                  img_pattern='<img class=.+?src="(.+?)"')
 
-def scrape_video(html):
-    url = re.findall('<IFRAME SRC="(.+?)"', html)[0]
-    html = get_url(url)
-    return parse(html,
-                 part_pattern='<script type=\'text/javascript\'>.+?"playlist"(.+?)</script>',
-                 name_pattern='"label".+?:.+?"(.+?)"',
-                 url_pattern='"file".+?:.+?"(.+?)"',
-                 img_pattern=None)
-
 def alpha_selected_html():
     return get_url(BASE_URL)
 
