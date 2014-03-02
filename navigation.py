@@ -28,7 +28,10 @@ class Navigation(object):
         list_item = self.xbmcgui.ListItem(caption)
         if thumb_url:
             list_item.setThumbnailImage(thumb_url)
-        list_item.setInfo(type="Video", infoLabels={"Title": caption})
+        infoLabels = {"Title": caption}
+        if plot:
+            infoLabels['Plot'] = plot
+        list_item.setInfo(type="Video", infoLabels=infoLabels)
         return self.xbmcplugin.addDirectoryItem(handle=self.handle, url=url,
                                                 listitem=list_item,
                                                 isFolder=True)
