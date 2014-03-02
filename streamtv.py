@@ -6,6 +6,13 @@ import urllib2
 BASE_URL = 'http://stream-tv.me'
 USERAGENT = ' Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3'
 
+def convert(val):
+    if isinstance(val, unicode):
+        val = val.encode('utf8')
+    elif isinstance(val, str):
+        val.decode('utf8')
+    return val
+
 def parameters_string_to_dict(str):
     params = {}
     if str:
@@ -13,8 +20,9 @@ def parameters_string_to_dict(str):
         for pair in pairs:
             split = pair.split('=')
             if (len(split)) == 2:
-                params[urllib.unquote(split[0])] = urllib.unquote(split[1]) \
-                    .decode('utf-8')
+                key = convert(urllib.unquote_plus(split[0]))
+                value = convert(urllib.unquote_plus(split[1]))
+                params[key] = value
     return params
 
 def get_url(url, filename=None, referer=None, data=None):
@@ -54,13 +62,15 @@ def scrape_shows(html, selected):
                  url_pattern='<li><strong><a href="(.+?)"')
 
 def scrape_seasons(html):
+    plot = re.findall('<p>(.+?)\xc2\xa0<a href', html)[0]
     part_pattern='<div class="entry">(.+?)</div>'
     names = parse(html,
                   part_pattern=part_pattern,
-                  name_pattern='<strong>(Season .+?)</strong>')
-    html = re.findall(part_pattern, html, re.DOTALL)
+                  name_pattern='<strong>(Season .+?)</strong>',
+                  url_pattern=None)
+    html = re.findall(part_pattern, html, re.DOTALL)[0]
     img_url = re.findall('<img class=.+?src="(.+?)"', html)[0]
-    return names, img_url
+    return names, img_url, plot
 
 def scrape_episodes(html, season):
     season = urllib.unquote_plus(season)

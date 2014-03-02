@@ -23,7 +23,7 @@ class Navigation(object):
         else:
             return None
 
-    def add_menu_item(self, caption, params, thumb_url=None):
+    def add_menu_item(self, caption, params, thumb_url=None, plot=None):
         url = self.plugin_url + '?' + urllib.urlencode(params)
         list_item = self.xbmcgui.ListItem(caption)
         if thumb_url:
@@ -68,22 +68,23 @@ class Navigation(object):
                 'show': name,
                 'url': url
                 }
-            self.add_menu_item(name, params, None)
+            self.add_menu_item(name, params)
         return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
                                               cacheToDisc=True)
 
     def show_selected(self):
         show_url = self.params['url']
         html = streamtv.show_selected_html(show_url)
-        seasons, thumb_url = streamtv.scrape_seasons(html)
+        seasons, thumb_url, plot = streamtv.scrape_seasons(html)
         for season in seasons:
             params = {
                 'action': 'seasonselected',
                 'url': show_url,
                 'season': season,
-                'thumb_url': thumb_url
+                'thumb_url': thumb_url,
+                'plot': plot
                 }
-            self.add_menu_item(season, params, thumb_url)
+            self.add_menu_item(season, params, thumb_url=thumb_url, plot=plot)
         return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
                                               cacheToDisc=True)
 
@@ -91,6 +92,7 @@ class Navigation(object):
         url = self.params['url']
         season = self.params['season']
         thumb_url = self.params['thumb_url']
+        plot = self.params['plot']
         html = streamtv.season_selected_html(url)
         for episode, url in \
                 streamtv.scrape_episodes(html, season):
@@ -98,9 +100,11 @@ class Navigation(object):
                 'action': 'episodeselected',
                 'url': url,
                 'thumb_url': thumb_url,
-                'title': episode
+                'title': episode,
+                'plot': plot
                 }
-            self.add_menu_item(episode, params, thumb_url)
+            self.add_menu_item(episode, params, thumb_url=thumb_url,
+                               plot=plot)
         return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
                                               cacheToDisc=True)
 
@@ -108,6 +112,7 @@ class Navigation(object):
         url = self.params['url']
         title = self.params['title']
         thumb_url = self.params['thumb_url']
+        plot = self.params['plot']
         html = streamtv.episode_selected_html(url)
         for caption, url in \
                 streamtv.scrape_episode(html):
@@ -123,7 +128,7 @@ class Navigation(object):
                 'title': name,
                 'movie_url': url if url else movie_url
                 }
-            self.add_menu_item(name, params, thumb_url)
+            self.add_menu_item(name, params, thumb_url=thumb_url)
         return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
                                               cacheToDisc=True)
 
@@ -149,7 +154,7 @@ class Navigation(object):
                 'title': name,
                 'movie_url': url
                 }
-            self.add_menu_item(name, params, thumb_url)
+            self.add_menu_item(name, params, thumb_url=thumb_url)
         return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
                                               cacheToDisc=True)
 
