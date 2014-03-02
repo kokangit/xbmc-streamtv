@@ -28,57 +28,46 @@ def get_url(url, filename=None, referer=None, data=None):
     response.close()
     return html
 
-def parse(html, part_pattern, name_pattern, url_pattern, img_pattern,
-          nameFlag=0, urlFlag=0, imgFlag=0):
-    # TODO plot
+def parse(html, part_pattern, name_pattern, url_pattern):
     html = re.findall(part_pattern, html, re.DOTALL)
     if not html:
         return []
     html = html[0].replace('</tr><tr>', '</tr>\n<tr>')
-    name = re.findall(name_pattern, html, nameFlag)
+    name = re.findall(name_pattern, html)
     if url_pattern:
-        url = re.findall(url_pattern, html, urlFlag)
+        url = re.findall(url_pattern, html)
         if len(url) != len(name):
             raise Exception('found ' + str(len(url)) +
                             ' urls but ' + str(len(name)) + ' names!')
     else:
         url = None
-    if img_pattern:
-        img = re.findall(img_pattern, html, imgFlag)
-        if len(img) != len(name) and len(img) == 1:
-            # pick first image for all
-            img = [img[0]]*len(name)
-    else:
-        img = None
-    if url and img:
-        ret = zip(name, url, img)
-    elif url:
+    if url:
         ret = zip(name, url)
-    elif img:
-        ret = zip(name, img)
+    else:
+        ret = name
     return ret
 
 def scrape_shows(html, selected):
     return parse(html,
                  part_pattern='<p><a name="%s"></a></p>(.+?)</ul>' % selected,
                  name_pattern='<li><strong><a href=".+?">(.+?)</a>',
-                 url_pattern='<li><strong><a href="(.+?)"',
-                 img_pattern=None)
+                 url_pattern='<li><strong><a href="(.+?)"')
 
 def scrape_seasons(html):
-    return parse(html,
-                 part_pattern='<div class="entry">(.+?)</div>',
-                 name_pattern='<strong>(Season .+?)</strong>',
-                 url_pattern=None,
-                 img_pattern='<img class=.+?src="(.+?)"')
+    part_pattern='<div class="entry">(.+?)</div>'
+    names = parse(html,
+                  part_pattern=part_pattern,
+                  name_pattern='<strong>(Season .+?)</strong>')
+    html = re.findall(part_pattern, html, re.DOTALL)
+    img_url = re.findall('<img class=.+?src="(.+?)"', html)[0]
+    return names, img_url
 
 def scrape_episodes(html, season):
     season = urllib.unquote_plus(season)
     return parse(html,
                  part_pattern='<strong>%s</strong>(.+?)</ul>' % season,
                  name_pattern='<li><a .+?">(.+?)</a>',
-                 url_pattern='<a href="(.+?)"',
-                 img_pattern=None)
+                 url_pattern='<a href="(.+?)"')
 
 def scrape_episode(html):
     url = re.findall('<IFRAME SRC="(.+?)"', html)[0]
@@ -86,8 +75,7 @@ def scrape_episode(html):
     return parse(html,
                  part_pattern='<script type=\'text/javascript\'>.+?"playlist"(.+?)</script>',
                  name_pattern='"label".+?:.+?"(.+?)"',
-                 url_pattern='"file".+?:.+?"(.+?)"',
-                 img_pattern=None)
+                 url_pattern='"file".+?:.+?"(.+?)"')
 
 def scrape_search(html):
     return parse(html,

@@ -75,8 +75,8 @@ class Navigation(object):
     def show_selected(self):
         show_url = self.params['url']
         html = streamtv.show_selected_html(show_url)
-        for season, thumb_url in \
-                streamtv.scrape_seasons(html):
+        seasons, thumb_url = streamtv.scrape_seasons(html)
+        for season in seasons:
             params = {
                 'action': 'seasonselected',
                 'url': show_url,
