@@ -40,7 +40,10 @@ def get_url(url, filename=None, referer=None, data=None):
     return html
 
 def parse(html, part_pattern, name_pattern, url_pattern):
-    html = re.findall(part_pattern, html, re.DOTALL)
+    if part_pattern:
+        html = re.findall(part_pattern, html, re.DOTALL)
+    else:
+        html = [html]
     if not html:
         return []
     html = html[0].replace('</tr><tr>', '</tr>\n<tr>')
@@ -50,13 +53,16 @@ def parse(html, part_pattern, name_pattern, url_pattern):
         if len(url) != len(name):
             raise Exception('found ' + str(len(url)) +
                             ' urls but ' + str(len(name)) + ' names!')
-    else:
-        url = None
-    if url:
         ret = zip(name, url)
     else:
         ret = name
     return ret
+
+def scrape_top_menu(html):
+    return parse(html,
+                 part_pattern=None,
+                 name_pattern='<p>.*?<strong.*>(.+?)<.*/strong>.*?</p>',
+                 url_pattern=None)
 
 def scrape_shows(html, selected):
     return parse(html,
@@ -96,6 +102,9 @@ def scrape_search(html):
                  name_pattern='<li><a .+?">(.+?)</a>',
                  url_pattern=None,
                  img_pattern='<img class=.+?src="(.+?)"')
+
+def top_menu_html():
+    return get_url(BASE_URL)
 
 def alpha_selected_html():
     return get_url(BASE_URL)

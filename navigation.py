@@ -46,19 +46,12 @@ class Navigation(object):
                                                 listitem=list_item,
                                                 isFolder=False)
 
-    def build_main_menu(self):
-        self.add_menu_item('A-Ö', {'action': 'alpha'})
-        self.add_menu_item('Sök', {'action': 'search'})
-        return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
-                                              cacheToDisc=True)
-
-    def alpha(self):
-        selections = ['0-9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
-                      'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
-                      'V', 'W', 'X', 'Y', 'Z', 'Å', 'Ä', 'Ö']
+    def top_menu(self):
+        html = streamtv.top_menu_html()
+        selections = streamtv.scrape_top_menu(html)
         for sel in selections:
-            self.add_menu_item(sel, {'action': 'alphaselected',
-                                     'selected': sel})
+            self.add_menu_item(sel.strip(), {'action': 'alphaselected',
+                                             'selected': sel.strip()})
         return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
                                               cacheToDisc=True)
 
@@ -145,12 +138,9 @@ class Navigation(object):
 
     def dispatch(self):
         if not 'action' in self.params:
-            return self.alpha()
-            #return self.build_main_menu()
+            return self.top_menu()
         action = self.params['action']
-        if action == 'alpha':
-            return self.alpha()
-        elif action == 'alphaselected':
+        if action == 'alphaselected':
             return self.alpha_selected()
         elif action == 'showselected':
             return self.show_selected()
