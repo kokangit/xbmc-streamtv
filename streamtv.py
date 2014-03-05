@@ -121,3 +121,11 @@ def episode_selected_html(url):
 def search_html(text):
     url = BASE_URL + '/?' + urllib.urlencode({'s': text, 'op.x': 0, 'op.y': 0})
     return get_url(url)
+
+def get_season_number(season):
+    s = re.findall('season.+?([0-9]+)', season, re.IGNORECASE)
+    return int(s[0])
+
+def get_episode_number(episode):
+    e = re.findall('episode.+?([0-9]+)', episode, re.IGNORECASE)
+    return int(e[0])
