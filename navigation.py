@@ -23,6 +23,17 @@ class Navigation(object):
         else:
             return None
 
+    def quality_select_dialog(self, stream_urls):
+        qualities = [s[0] for s in stream_urls]
+        dialog = self.xbmcgui.Dialog()
+        answer = 0
+        if len(qualities) > 1:
+            answer = dialog.select("Välj kvalitet", qualities)
+            if answer == -1:
+                return
+        url = stream_urls[answer][1]
+        return url
+
     def add_menu_item(self, caption, params, thumb_url=None, plot=None):
         url = self.plugin_url + '?' + urllib.urlencode(params)
         list_item = self.xbmcgui.ListItem(caption)
@@ -36,18 +47,20 @@ class Navigation(object):
                                                 listitem=list_item,
                                                 isFolder=True)
 
-    def add_video_item(self, name, show, season, episode, caption, url,
-                       thumb_url=None):
+    def add_video_item(self, caption, params, thumb_url=None, plot=None):
+        url = self.plugin_url + '?' + urllib.urlencode(params)
         list_item = self.xbmcgui.ListItem(caption)
         list_item.setProperty('IsPlayable', 'true')
         if thumb_url:
             list_item.setThumbnailImage(thumb_url)
-        season = streamtv.get_season_number(season)
-        episode = streamtv.get_episode_number(episode)
-        list_item.setInfo(type="Video",
-                          infoLabels={'TVshowtitle': show,
-                                      'Season': season,
-                                      'Episode': episode})
+        season = streamtv.get_season_number(params['season'])
+        episode = streamtv.get_episode_number(params['episode'])
+        infoLabels = {'TVshowtitle': params['show'],
+                      'Season': season,
+                      'Episode': episode}
+        if plot:
+            infoLabels['Plot'] = plot
+        list_item.setInfo(type="Video", infoLabels=infoLabels)
         return self.xbmcplugin.addDirectoryItem(handle=self.handle, url=url,
                                                 listitem=list_item,
                                                 isFolder=False)
@@ -110,7 +123,7 @@ class Navigation(object):
                 'episode': episode,
                 'plot': plot
                 }
-            self.add_menu_item(episode, params, thumb_url=thumb_url,
+            self.add_video_item(episode, params, thumb_url=thumb_url,
                                plot=plot)
         return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
                                               cacheToDisc=True)
@@ -118,16 +131,24 @@ class Navigation(object):
     def episode_selected(self):
         url = self.params['url']
         title = self.params['episode']
-        show = self.params['show']
-        season = self.params['season']
-        episode = self.params['episode']
         thumb_url = self.params['thumb_url']
         plot = self.params['plot']
         html = streamtv.episode_selected_html(url)
-        for caption, url in \
-                streamtv.scrape_episode(html):
-            self.add_video_item(title, show, season, episode, caption, url,
-                                thumb_url)
+        streams = streamtv.scrape_episode(html)
+        url = self.quality_select_dialog(streams)
+        list_item = self.xbmcgui.ListItem(title)
+        if thumb_url:
+            list_item.setThumbnailImage(thumb_url)
+        season = streamtv.get_season_number(self.params['season'])
+        episode = streamtv.get_episode_number(self.params['episode'])
+        infoLabels = {'TVshowtitle': self.params['show'],
+                      'Season': season,
+                      'Episode': episode}
+        if plot:
+            infoLabels['Plot'] = plot
+        list_item.setInfo(type="Video", infoLabels=infoLabels)
+        list_item.setPath(url)
+        self.xbmcplugin.setResolvedUrl(self.handle, url!=None, list_item)
         return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
                                               cacheToDisc=True)
 
