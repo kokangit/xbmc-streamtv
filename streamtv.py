@@ -60,13 +60,13 @@ def parse(html, part_pattern, name_pattern, url_pattern):
 
 def scrape_top_menu(html):
     return parse(html,
-                 part_pattern=None,
-                 name_pattern='<p>.*?<strong.*>(.+?)<.*/strong>.*?</p>',
+                 part_pattern='<strong>Select.+?</p>(.+?)</html>',
+                 name_pattern='<strong.*>(.+?)<.*/strong>.*?</p>',
                  url_pattern=None)
 
 def scrape_shows(html, selected):
     return parse(html,
-                 part_pattern='<p><a name="%s"></a></p>(.+?)</ul>' % selected,
+                 part_pattern='<strong>Select.+?<strong.*?>%s[ ]*?<.*?/strong>.*?</p>(.+?)</ul>' % selected,
                  name_pattern='<li><strong><a href=".+?">(.+?)</a>',
                  url_pattern='<li><strong><a href="(.+?)"')
 

@@ -1,3 +1,7 @@
+Version 0.4
+-----------
+- Site changed in top level
+
 Version 0.3
 -----------
 - Select stream quality in dialog
