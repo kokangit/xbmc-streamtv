@@ -124,10 +124,8 @@ def search_html(text):
 
 def get_season_number(season):
     s = re.findall('season.+?([0-9]+)', season, re.IGNORECASE)
-#    return int(s[0])
     return s[0]
 
 def get_episode_number(episode):
     e = re.findall('episode.+?([0-9]+)', episode, re.IGNORECASE)
-#    return int(e[0])
     return e[0]

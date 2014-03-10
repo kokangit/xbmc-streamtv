@@ -14,6 +14,7 @@ class Navigation(object):
         self.handle = int(argv[1])
         self.params = streamtv.parameters_string_to_dict(argv[2])
         self.settings = xbmcaddon.Addon(id='plugin.video.streamtv')
+        self.localize = self.settings.getLocalizedString
 
     def unikeyboard(self, default, message):
         keyboard = self.xbmc.Keyboard(default, message)
@@ -28,7 +29,7 @@ class Navigation(object):
         dialog = self.xbmcgui.Dialog()
         answer = 0
         if len(qualities) > 1:
-            answer = dialog.select("Välj kvalitet", qualities)
+            answer = dialog.select(self.localize(30000), qualities)
             if answer == -1:
                 return
         url = stream_urls[answer][1]
