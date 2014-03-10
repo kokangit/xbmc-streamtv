@@ -31,7 +31,7 @@ class Navigation(object):
         if len(qualities) > 1:
             answer = dialog.select(self.localize(30000), qualities)
             if answer == -1:
-                return
+                return None
         url = stream_urls[answer][1]
         return url
 
@@ -137,6 +137,11 @@ class Navigation(object):
         html = streamtv.episode_selected_html(url)
         streams = streamtv.scrape_episode(html)
         url = self.quality_select_dialog(streams)
+        if not url:
+            self.xbmcplugin.setResolvedUrl(self.handle, succeeded=False,
+                                           listitem=self.xbmcgui.ListItem(''))
+            return self.xbmcplugin.endOfDirectory(self.handle, succeeded=False,
+                                                  cacheToDisc=True)
         list_item = self.xbmcgui.ListItem(title)
         if thumb_url:
             list_item.setThumbnailImage(thumb_url)
