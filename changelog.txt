@@ -1,3 +1,8 @@
+Version 0.7
+-----------
+- Added top menu item "All"
+- Fixed bugs
+
 Version 0.6
 -----------
 - Fixed bug when not selecting quality
