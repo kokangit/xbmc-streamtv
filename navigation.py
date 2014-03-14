@@ -25,6 +25,8 @@ class Navigation(object):
             return None
 
     def quality_select_dialog(self, stream_urls):
+        if not stream_urls:
+            return None
         qualities = [s[0] for s in stream_urls]
         dialog = self.xbmcgui.Dialog()
         answer = 0
@@ -66,7 +68,21 @@ class Navigation(object):
                                                 listitem=list_item,
                                                 isFolder=False)
 
+    def all(self):
+        html = streamtv.all_selected_html()
+        for name, url in \
+                streamtv.scrape_all(html):
+            params = {
+                'action': 'showselected',
+                'show': name,
+                'url': url
+                }
+            self.add_menu_item(name, params)
+        return self.xbmcplugin.endOfDirectory(self.handle, succeeded=True,
+                                              cacheToDisc=True)
+
     def top_menu(self):
+        self.add_menu_item(self.localize(30101), {'action': 'all'})
         html = streamtv.top_menu_html()
         selections = streamtv.scrape_top_menu(html)
         for sel in selections:
@@ -182,7 +198,9 @@ class Navigation(object):
         if not 'action' in self.params:
             return self.top_menu()
         action = self.params['action']
-        if action == 'alphaselected':
+        if action == 'all':
+            return self.all()
+        elif action == 'alphaselected':
             return self.alpha_selected()
         elif action == 'showselected':
             return self.show_selected()

@@ -1,10 +1,17 @@
 # -*- coding: utf-8 -*-
+from copy import deepcopy
 from mocks import Xbmc, Xbmcplugin, Xbmcgui, Xbmcaddon
 import streamtv
 import unittest
 from navigation import Navigation
 
 class FirstTests(unittest.TestCase):
+    def setUp(self):
+        self.xbmc = Xbmc(Xbmc.LOGERROR)
+        self.xbmcplugin = Xbmcplugin(self.xbmc)
+        self.xbmcgui = Xbmcgui()
+        self.xbmcaddon = Xbmcaddon()
+
     def test_streamtv(self):
         params = streamtv.parameters_string_to_dict('?mode=search')
         self.assertEquals(params, {'mode': 'search'})
@@ -16,23 +23,66 @@ class FirstTests(unittest.TestCase):
 
     def test_navigation(self):
         argv = ['plugin', '1', '']
-        xbmc = Xbmc()
-        xbmcplugin = Xbmcplugin(xbmc)
-        xbmcgui = Xbmcgui()
-        xbmcaddon = Xbmcaddon()
-        nav = Navigation(Xbmc, Xbmcplugin, Xbmcgui, Xbmcaddon, argv)
+        nav = Navigation(self.xbmc, self.xbmcplugin, self.xbmcgui,
+                         self.xbmcaddon, argv)
         self.assertEquals(nav.plugin_url, 'plugin')
         self.assertEquals(nav.handle, 1)
         self.assertEquals(nav.params, {})
 
+        # call with no parameters
+        nav.dispatch()
+        self.assertTrue(len(self.xbmcplugin.dir_items) > 0)
+        self.assertEquals(self.xbmcplugin.dir_items[0][2].caption, 'Alla')
+
+        # select first item in list
+        params = self.xbmcplugin.dir_items[0][1].split('?')[1]
+        argv = ['plugin', '1', '?' + params]
+        self.xbmcplugin.reset()
+        nav = Navigation(self.xbmc, self.xbmcplugin, self.xbmcgui,
+                         self.xbmcaddon, argv)
+        nav.dispatch()
+        self.assertTrue(len(self.xbmcplugin.dir_items) > 0)
+
     def test_nav_params(self):
-        xbmc = Xbmc()
-        xbmcplugin = Xbmcplugin(xbmc)
-        xbmcgui = Xbmcgui()
-        xbmcaddon = Xbmcaddon()
         argv = ['default.py', '10', '?mode=search']
-        nav = Navigation(Xbmc, Xbmcplugin, Xbmcgui, Xbmcaddon, argv)
+        nav = Navigation(self.xbmc, self.xbmcplugin, self.xbmcgui,
+                         self.xbmcaddon, argv)
         self.assertEquals(nav.params, {'mode': 'search'})
+
+    def test_traverse_all(self):
+        argv = ['plugin', '1', '']
+        nav = Navigation(self.xbmc, self.xbmcplugin, self.xbmcgui,
+                         self.xbmcaddon, argv)
+        self.assertEquals(nav.plugin_url, 'plugin')
+        self.assertEquals(nav.handle, 1)
+        self.assertEquals(nav.params, {})
+
+        # call with no parameters
+        nav.dispatch()
+        self.traverse_video = False
+        self.traverse(self.xbmcplugin.dir_items, [])
+
+    def traverse(self, dir_items, stack):
+        print '***** stack: ' + str(stack)
+        i = 0
+        for (handle, url, listitem, isFolder) in dir_items:
+            i += 1
+            params = url.split('?')[1]
+            if isFolder or (self.traverse_video and url.find('plugin') == 0):
+                stack.append(i)
+                print '***** selecting: ' + str(listitem.caption)
+                argv = ['plugin', '1', '?' + params]
+                self.xbmcplugin.reset()
+                nav = Navigation(self.xbmc, self.xbmcplugin, self.xbmcgui,
+                                 self.xbmcaddon, argv)
+                nav.dispatch()
+                new_list = deepcopy(self.xbmcplugin.dir_items)
+                self.traverse(new_list, stack)
+            else:
+                pass
+        if len(stack) > 0:
+            stack.pop()
+        return
 
 if __name__ == '__main__':
     unittest.main()

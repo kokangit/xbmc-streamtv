@@ -42,6 +42,7 @@ class Xbmcplugin(object):
     def __init__(self, xbmc):
         self.xbmc = xbmc
         self.dir_items = []
+        self.succeeded = False
 
     def addDirectoryItem(self, handle, url, listitem, isFolder):
         self.dir_items.append((handle, url, listitem, isFolder))
@@ -50,8 +51,18 @@ class Xbmcplugin(object):
 
     def endOfDirectory(self, handle, succeeded=None, updateListing=None,
                        cacheToDisc=None):
-        pass
+        self.succeeded = succeeded
 
+    def setResolvedUrl(self, handle, succeeded, listitem):
+        if succeeded:
+            msg = "start playing " + listitem.path
+        else:
+            msg = "could not find film"
+        self.xbmc.log(msg)
+
+    def reset(self):
+        self.dir_items = []
+        self.succeeded = False
 
 class Xbmcgui(object):
     class ListItem(object):
@@ -70,6 +81,9 @@ class Xbmcgui(object):
 
         def setProperty(self, key, value):
             self.properties[key] = value
+
+        def setPath(self, path):
+            self.path = path
 
     class Dialog(object):
         def ok(self, title, msg):

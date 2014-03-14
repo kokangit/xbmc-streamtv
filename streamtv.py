@@ -64,6 +64,12 @@ def scrape_top_menu(html):
                  name_pattern='<strong.*>(.+?)<.*/strong>.*?</p>',
                  url_pattern=None)
 
+def scrape_all(html):
+    return parse(html,
+                 part_pattern='<strong>Select.+?</p>(.+?)</html>',
+                 name_pattern='<li><strong><a href=".+?">(.+?)</a>',
+                 url_pattern='<li><strong><a href="(.+?)"')
+
 def scrape_shows(html, selected):
     return parse(html,
                  part_pattern='<strong>Select.+?<strong.*?>%s[ ]*?<.*?/strong>.*?</p>(.+?)</ul>' % selected,
@@ -84,13 +90,16 @@ def scrape_seasons(html):
 def scrape_episodes(html, season):
     season = urllib.unquote_plus(season)
     return parse(html,
-                 part_pattern='<strong>.*?%s.*?</strong>(.+?)</ul>' % season,
-                 name_pattern='<li><a .+?">(.+?)</a>',
-                 url_pattern='<a href="(.+?)"')
+                 part_pattern='<strong>.*?%s.*?</strong>.+?<ul>(.+?)<[/]*ul>'\
+                     % season,
+                 name_pattern='<li><a .+?">(.+?)<(?:/a>|/a<|br/>)',
+                 url_pattern='<li><a href="(.+?)"')
 
 def scrape_episode(html):
     url = re.findall('<IFRAME SRC="(.+?)"', html)[0]
     html = get_url(url)
+    if html.find('id="content">File was deleted') > -1:
+        return None
     return parse(html,
                  part_pattern='<script type=\'text/javascript\'>.+?"playlist"(.+?)</script>',
                  name_pattern='"label".+?:.+?"(.+?)"',
@@ -104,6 +113,9 @@ def scrape_search(html):
                  img_pattern='<img class=.+?src="(.+?)"')
 
 def top_menu_html():
+    return get_url(BASE_URL)
+
+def all_selected_html():
     return get_url(BASE_URL)
 
 def alpha_selected_html():
@@ -124,8 +136,14 @@ def search_html(text):
 
 def get_season_number(season):
     s = re.findall('season.+?([0-9]+)', season, re.IGNORECASE)
-    return s[0]
+    if s:
+        return s[0]
+    else:
+        return None
 
 def get_episode_number(episode):
     e = re.findall('episode.+?([0-9]+)', episode, re.IGNORECASE)
-    return e[0]
+    if e:
+        return e[0]
+    else:
+        return None
