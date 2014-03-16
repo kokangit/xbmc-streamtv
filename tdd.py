@@ -70,7 +70,7 @@ class FirstTests(unittest.TestCase):
             params = url.split('?')[1]
             if isFolder or (self.traverse_video and url.find('plugin') == 0):
                 stack.append(i)
-                print '***** selecting: ' + str(listitem.caption)
+                print '***** selecting %d: %s' % (i, listitem.caption)
                 argv = ['plugin', '1', '?' + params]
                 self.xbmcplugin.reset()
                 nav = Navigation(self.xbmc, self.xbmcplugin, self.xbmcgui,

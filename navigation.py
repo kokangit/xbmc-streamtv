@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from mocks import Xbmc, Xbmcplugin, Xbmcgui, Xbmcaddon
 import streamtv
 import sys
 import urllib
@@ -220,6 +219,7 @@ class Navigation(object):
 # Use of standalone Navigation for testing:
 # python navigation.py <params>
 if __name__ == '__main__':
+    from mocks import Xbmc, Xbmcplugin, Xbmcgui, Xbmcaddon
     xbmc = Xbmc(level=Xbmc.LOGNOTICE)
     xbmcplugin = Xbmcplugin(xbmc)
     xbmcgui = Xbmcgui()
