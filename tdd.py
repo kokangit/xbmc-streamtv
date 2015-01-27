@@ -13,9 +13,11 @@ class FirstTests(unittest.TestCase):
         self.xbmcaddon = Xbmcaddon()
 
     def test_streamtv(self):
-        params = streamtv.parameters_string_to_dict('?mode=search')
+        self.streamtv = streamtv.Streamtv(self.xbmc, self.xbmcplugin,
+                                          self.xbmcgui, self.xbmcaddon)
+        params = self.streamtv.parameters_string_to_dict('?mode=search')
         self.assertEquals(params, {'mode': 'search'})
-        params = streamtv.parameters_string_to_dict('?action=search_result&movie_url=http%3A%2F%2Fstream-tv.me%2Fwatch-arrow-online-streaming%2F&title=Arrow')
+        params = self.streamtv.parameters_string_to_dict('?action=search_result&movie_url=http%3A%2F%2Fstream-tv.me%2Fwatch-arrow-online-streaming%2F&title=Arrow')
         self.assertEquals(params['action'], 'search_result')
         self.assertEquals(params['movie_url'],
                           'http://stream-tv.me/watch-arrow-online-streaming/')
@@ -23,8 +25,10 @@ class FirstTests(unittest.TestCase):
 
     def test_navigation(self):
         argv = ['plugin', '1', '']
+        self.streamtv = streamtv.Streamtv(self.xbmc, self.xbmcplugin,
+                                          self.xbmcgui, self.xbmcaddon)
         nav = Navigation(self.xbmc, self.xbmcplugin, self.xbmcgui,
-                         self.xbmcaddon, argv)
+                         self.xbmcaddon, self.streamtv, argv)
         self.assertEquals(nav.plugin_url, 'plugin')
         self.assertEquals(nav.handle, 1)
         self.assertEquals(nav.params, {})
@@ -39,20 +43,24 @@ class FirstTests(unittest.TestCase):
         argv = ['plugin', '1', '?' + params]
         self.xbmcplugin.reset()
         nav = Navigation(self.xbmc, self.xbmcplugin, self.xbmcgui,
-                         self.xbmcaddon, argv)
+                         self.xbmcaddon, self.streamtv, argv)
         nav.dispatch()
         self.assertTrue(len(self.xbmcplugin.dir_items) > 0)
 
     def test_nav_params(self):
         argv = ['default.py', '10', '?mode=search']
+        self.streamtv = streamtv.Streamtv(self.xbmc, self.xbmcplugin,
+                                          self.xbmcgui, self.xbmcaddon)
         nav = Navigation(self.xbmc, self.xbmcplugin, self.xbmcgui,
-                         self.xbmcaddon, argv)
+                         self.xbmcaddon, self.streamtv, argv)
         self.assertEquals(nav.params, {'mode': 'search'})
 
     def test_traverse_all(self):
         argv = ['plugin', '1', '']
+        self.streamtv = streamtv.Streamtv(self.xbmc, self.xbmcplugin,
+                                          self.xbmcgui, self.xbmcaddon)
         nav = Navigation(self.xbmc, self.xbmcplugin, self.xbmcgui,
-                         self.xbmcaddon, argv)
+                         self.xbmcaddon, self.streamtv, argv)
         self.assertEquals(nav.plugin_url, 'plugin')
         self.assertEquals(nav.handle, 1)
         self.assertEquals(nav.params, {})
@@ -64,6 +72,8 @@ class FirstTests(unittest.TestCase):
 
     def traverse(self, dir_items, stack):
         print '***** stack: ' + str(stack)
+        self.streamtv = streamtv.Streamtv(self.xbmc, self.xbmcplugin,
+                                          self.xbmcgui, self.xbmcaddon)
         i = 0
         for (handle, url, listitem, isFolder) in dir_items:
             i += 1
@@ -74,7 +84,7 @@ class FirstTests(unittest.TestCase):
                 argv = ['plugin', '1', '?' + params]
                 self.xbmcplugin.reset()
                 nav = Navigation(self.xbmc, self.xbmcplugin, self.xbmcgui,
-                                 self.xbmcaddon, argv)
+                                 self.xbmcaddon, self.streamtv, argv)
                 nav.dispatch()
                 new_list = deepcopy(self.xbmcplugin.dir_items)
                 self.traverse(new_list, stack)

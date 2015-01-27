@@ -31,6 +31,11 @@ class Xbmc(object):
         if level[1] <= self.level[1]:
             print msg
 
+    def translatePath(self, path):
+        if 'special://' in path:
+            return './' + path.split('special://')[1]
+        return path
+
     class Player(object):
         def play(self, *args, **kwargs):
             print 'playing stream %s (%s)'  % (kwargs['listitem'].infoLabels['Title'], kwargs['item'])
@@ -119,10 +124,18 @@ class Xbmcaddon(object):
                  self.strings[key] = el.childNodes[0].data
              break
 
+         self.info = {'path': os.getcwd(), 'profile': os.getcwd(),
+                      'name': 'SVT Play', 'version': '3.4.0'}
+
          self.readTestConfig()
 
      def __del__(self):
          self.writeTestConfig()
+
+     def getAddonInfo(self, key):
+         if key in self.info:
+             return self.info[key]
+         return None
 
      def readSettings(self, fileName):
          doc = parse(fileName)

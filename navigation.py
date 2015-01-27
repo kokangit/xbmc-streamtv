@@ -5,13 +5,14 @@ import urllib
 
 class Navigation(object):
 
-    def __init__(self, xbmc, xbmcplugin, xbmcgui, xbmcaddon, argv):
+    def __init__(self, xbmc, xbmcplugin, xbmcgui, xbmcaddon, streamtv, argv):
         self.xbmc = xbmc
         self.xbmcplugin = xbmcplugin
         self.xbmcgui = xbmcgui
+        self.streamtv = streamtv
         self.plugin_url = argv[0]
         self.handle = int(argv[1])
-        self.params = streamtv.parameters_string_to_dict(argv[2])
+        self.params = self.streamtv.parameters_string_to_dict(argv[2])
         self.settings = xbmcaddon.Addon(id='plugin.video.streamtv')
         self.localize = self.settings.getLocalizedString
 
@@ -55,8 +56,8 @@ class Navigation(object):
         list_item.setProperty('IsPlayable', 'true')
         if thumb_url:
             list_item.setThumbnailImage(thumb_url)
-        season = streamtv.get_season_number(params['season'])
-        episode = streamtv.get_episode_number(params['episode'])
+        season = self.streamtv.get_season_number(params['season'])
+        episode = self.streamtv.get_episode_number(params['episode'])
         infoLabels = {'TVshowtitle': params['show'],
                       'Season': season,
                       'Episode': episode}
@@ -68,9 +69,9 @@ class Navigation(object):
                                                 isFolder=False)
 
     def all(self):
-        html = streamtv.all_selected_html()
+        html = self.streamtv.all_selected_html()
         for name, url in \
-                streamtv.scrape_all(html):
+                self.streamtv.scrape_all(html):
             params = {
                 'action': 'showselected',
                 'show': name,
@@ -82,8 +83,8 @@ class Navigation(object):
 
     def top_menu(self):
         self.add_menu_item(self.localize(30101), {'action': 'all'})
-        html = streamtv.top_menu_html()
-        selections = streamtv.scrape_top_menu(html)
+        html = self.streamtv.top_menu_html()
+        selections = self.streamtv.scrape_top_menu(html)
         for sel in selections:
             self.add_menu_item(sel.strip(), {'action': 'alphaselected',
                                              'selected': sel.strip()})
@@ -91,9 +92,9 @@ class Navigation(object):
                                               cacheToDisc=True)
 
     def alpha_selected(self):
-        html = streamtv.alpha_selected_html()
+        html = self.streamtv.alpha_selected_html()
         for name, url in \
-                streamtv.scrape_shows(html, self.params['selected']):
+                self.streamtv.scrape_shows(html, self.params['selected']):
             params = {
                 'action': 'showselected',
                 'show': name,
@@ -106,8 +107,8 @@ class Navigation(object):
     def show_selected(self):
         show_url = self.params['url']
         show = self.params['show']
-        html = streamtv.show_selected_html(show_url)
-        seasons, thumb_url, plot = streamtv.scrape_seasons(html)
+        html = self.streamtv.show_selected_html(show_url)
+        seasons, thumb_url, plot = self.streamtv.scrape_seasons(html)
         for season in seasons:
             params = {
                 'action': 'seasonselected',
@@ -127,9 +128,9 @@ class Navigation(object):
         season = self.params['season']
         thumb_url = self.params['thumb_url']
         plot = self.params['plot']
-        html = streamtv.season_selected_html(url)
+        html = self.streamtv.season_selected_html(url)
         for episode, url in \
-                streamtv.scrape_episodes(html, season):
+                self.streamtv.scrape_episodes(html, season):
             params = {
                 'action': 'episodeselected',
                 'url': url,
@@ -149,8 +150,8 @@ class Navigation(object):
         title = self.params['episode']
         thumb_url = self.params['thumb_url']
         plot = self.params['plot']
-        html = streamtv.episode_selected_html(url)
-        streams = streamtv.scrape_episode(html)
+        html = self.streamtv.episode_selected_html(url)
+        streams = self.streamtv.scrape_episode(html)
         url = self.quality_select_dialog(streams)
         if not url:
             self.xbmcplugin.setResolvedUrl(self.handle, succeeded=False,
@@ -160,8 +161,8 @@ class Navigation(object):
         list_item = self.xbmcgui.ListItem(title)
         if thumb_url:
             list_item.setThumbnailImage(thumb_url)
-        season = streamtv.get_season_number(self.params['season'])
-        episode = streamtv.get_episode_number(self.params['episode'])
+        season = self.streamtv.get_season_number(self.params['season'])
+        episode = self.streamtv.get_episode_number(self.params['episode'])
         infoLabels = {'TVshowtitle': self.params['show'],
                       'Season': season,
                       'Episode': episode}
@@ -181,9 +182,9 @@ class Navigation(object):
         text = self.unikeyboard(latestSearch, "")
         if not text or text == "": return
         self.settings.setSetting("latestSearch", text)
-        html = streamtv.search_html(text)
+        html = self.streamtv.search_html(text)
         for name, url in \
-                streamtv.scrape_search(html):
+                self.streamtv.scrape_search(html):
             params = {
                 'action': 'showselected',
                 'show': name,

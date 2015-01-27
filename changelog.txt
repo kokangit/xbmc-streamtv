@@ -1,3 +1,7 @@
+Version 0.9
+-----------
+- Adapt to site changes
+
 Version 0.8
 -----------
 - Fixed bugs
