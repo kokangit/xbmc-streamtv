@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import cookielib
 import os
 import re
 import urllib
@@ -10,6 +11,15 @@ USERAGENT = ' Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/
 
 class Streamtv:
 
+    class MyHTTPRedirectHandler(urllib2.HTTPRedirectHandler):
+        def http_error_302(self, req, fp, code, msg, headers):
+            return urllib2.HTTPRedirectHandler.http_error_302(self, req, fp,
+                                                              code, msg,
+                                                              headers)
+
+        http_error_301 = http_error_303 = http_error_307 = http_error_302
+
+
     def __init__(self, xbmc, xbmcplugin, xbmcgui, xbmcaddon):
         self.xbmc = xbmc
         self.xbmcplugin = xbmcplugin
@@ -20,6 +30,15 @@ class Streamtv:
                              decode('utf-8'), 'temp'))
         if not os.path.exists(temp):
             os.makedirs(temp)
+        cookiejarfile = os.path.join(temp, 'streamtv_cookies.dat')
+        self.cookiejar = cookielib.LWPCookieJar(cookiejarfile)
+        if os.path.exists(cookiejarfile):
+            self.cookiejar.load()
+
+        cookieprocessor = urllib2.HTTPCookieProcessor(self.cookiejar)
+        opener = urllib2.build_opener(Streamtv.MyHTTPRedirectHandler,
+                                      cookieprocessor)
+        urllib2.install_opener(opener)
 
     def convert(self, val):
         if isinstance(val, unicode):
@@ -60,6 +79,7 @@ class Streamtv:
         url = response.geturl()
         html = response.read()
         response.close()
+        self.cookiejar.save()
 
         if filename and SAVE_FILE:
             filename = self.xbmc.translatePath('special://temp/' + filename)
@@ -67,6 +87,15 @@ class Streamtv:
             file.write(html)
             file.close()
         return html
+
+    def addCookies2Url(self, url):
+        c = ''
+        for cookie in self.cookiejar:
+            if cookie.domain_specified and cookie.domain in url:
+                c += cookie.name + '=' + cookie.value + ';'
+        if len(c) > 0:
+            url += '|Cookie=' + urllib.quote(c)
+        return url
 
     def parse(self, html, part_pattern, name_pattern, url_pattern):
         if part_pattern:
@@ -82,7 +111,7 @@ class Streamtv:
             if len(url) != len(name):
                 raise Exception('found ' + str(len(url)) +
                                 ' urls but ' + str(len(name)) + ' names!')
-            ret = zip(name, url)
+            ret = zip(name, [self.addCookies2Url(x) for x in url])
         else:
             ret = name
         return ret
@@ -95,9 +124,9 @@ class Streamtv:
 
     def scrape_all(self, html):
         return self.parse(html,
-                     part_pattern='<strong>Select.+?</p>(.+?)</html>',
-                     name_pattern='<li><strong><a href=".+?">(.+?)</a>',
-                     url_pattern='<li><strong><a href="(.+?)"')
+                     part_pattern='<p><a name=(.+?)<hr',
+                     name_pattern='<li><a href=".+?">(.+?)</a>',
+                     url_pattern='<li><a href="(.+?)"')
 
     def scrape_shows(self, html, selected):
         return self.parse(html,
