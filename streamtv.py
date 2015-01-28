@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import cookielib
+import HTMLParser
 import os
 import re
 import urllib
@@ -25,6 +26,7 @@ class Streamtv:
         self.xbmcplugin = xbmcplugin
         self.xbmcgui = xbmcgui
         self.xbmcaddon = xbmcaddon
+        self.htmlParser = HTMLParser.HTMLParser()
         temp = self.xbmc.translatePath(
             os.path.join(self.xbmcaddon.Addon().getAddonInfo('profile').\
                              decode('utf-8'), 'temp'))
@@ -105,7 +107,8 @@ class Streamtv:
         if not html:
             return []
         html = html[0].replace('</tr><tr>', '</tr>\n<tr>')
-        name = re.findall(name_pattern, html)
+        name = [unicode(self.htmlParser.unescape(x)).encode('utf-8')
+                for x in re.findall(name_pattern, html)]
         if url_pattern:
             url = re.findall(url_pattern, html)
             if len(url) != len(name):
